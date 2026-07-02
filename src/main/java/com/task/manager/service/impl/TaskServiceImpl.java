@@ -5,6 +5,7 @@ import com.task.manager.dto.response.TaskResponse;
 import com.task.manager.entity.Role;
 import com.task.manager.entity.Task;
 import com.task.manager.entity.User;
+import com.task.manager.exception.ResourceNotFoundException;
 import com.task.manager.repository.TaskRepository;
 import com.task.manager.repository.UserRepository;
 import com.task.manager.service.TaskService;
@@ -54,7 +55,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse getTaskById(Long id) {
         User currentUser = getCurrentUser();
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
 
         validateOwnership(task, currentUser);
 
@@ -65,7 +66,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse updateTask(Long id, TaskRequest request) {
         User currentUser = getCurrentUser();
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
 
         validateOwnership(task, currentUser);
 
@@ -81,7 +82,7 @@ public class TaskServiceImpl implements TaskService {
     public void deleteTask(Long id) {
         User currentUser = getCurrentUser();
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
 
         validateOwnership(task, currentUser);
 
@@ -91,7 +92,7 @@ public class TaskServiceImpl implements TaskService {
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Current user not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
     }
 
     private void validateOwnership(Task task, User currentUser) {

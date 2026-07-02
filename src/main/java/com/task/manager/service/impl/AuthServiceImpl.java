@@ -5,12 +5,16 @@ import com.task.manager.dto.request.RegisterRequest;
 import com.task.manager.dto.response.AuthResponse;
 import com.task.manager.entity.Role;
 import com.task.manager.entity.User;
+import com.task.manager.exception.UserAlreadyExistsException;
+import com.task.manager.exception.UnauthorizedException;
+import com.task.manager.exception.ResourceNotFoundException;
 import com.task.manager.repository.UserRepository;
 import com.task.manager.security.JwtService;
 import com.task.manager.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
         validateEmail(email);
 
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("Email is already registered");
+            throw new UserAlreadyExistsException("Email is already registered");
         }
 
         User user = User.builder()
@@ -59,12 +63,16 @@ public class AuthServiceImpl implements AuthService {
         String email = normalizeEmail(request.getEmail());
         validateEmail(email);
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, request.getPassword())
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, request.getPassword())
+            );
+        } catch (AuthenticationException e) {
+            throw new UnauthorizedException("Invalid email or password");
+        }
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
         String token = jwtService.generateToken(toUserDetails(user));
 
         return toAuthResponse(user, token);
