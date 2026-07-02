@@ -1,0 +1,102 @@
+.task-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.task-card.completed {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.task-card.completed .task-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-card.completed .task-desc {
+  color: #94a3b8;
+}
+
+.task-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.toggle-complete-btn {
+  background: transparent;
+  padding: 2px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-completed {
+  color: var(--success);
+}
+
+.icon-incomplete {
+  color: var(--text-muted);
+}
+
+.toggle-complete-btn:hover .icon-incomplete {
+  color: var(--primary);
+}
+
+.task-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.task-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  background: transparent;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 16px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
+
+.action-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.edit-btn:hover {
+  color: var(--primary);
+  border-color: #bfdbfe;
+}
+
+.delete-btn:hover {
+  color: var(--danger);
+  border-color: #fecaca;
+}

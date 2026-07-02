@@ -56,12 +56,21 @@ A robust and secure Task Management REST API built using Spring Boot, Spring Sec
    spring.datasource.password=YOUR_MYSQL_PASSWORD
    ```
 
-### 3. Running the Project
+### 3. Running the Backend
 Navigate to the root directory in your command line and execute the following command:
 ```bash
 ./mvnw spring-boot:run
 ```
 The application will start on port `8080` (by default).
+
+### 4. Running the Frontend
+Navigate to the `frontend` directory:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The frontend will start on port `5173` (by default) at `http://localhost:5173`.
 
 ---
 
