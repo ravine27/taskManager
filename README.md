@@ -25,6 +25,12 @@ A robust and secure Task Management System featuring a React frontend and Spring
 ### User Dashboard (Viewing Assigned Tasks & Submitting Proof)
 ![User Dashboard](screenshots/screen_shot_of_the_user_ttasks.png)
 
+### User / Admin Role Select
+![Role Selection](screenshots/role_screen_task.png)
+
+### Task Details View
+![Task Screen Shot](screenshots/task_screen_shot.png)
+
 ### Swagger API Documentation
 ![Swagger Documentation](screenshots/swagger_documentation.png)
 
