@@ -22,6 +22,10 @@ A robust, full-stack **Task Management System** featuring a modern, responsive *
 
 ## 📸 Application Screenshots
 
+### 🏗️ System Architecture Diagram
+*Conceptual system design mapping Client, Server, and Database layers.*
+![System Design Diagram](screenshots/System_Design.png)
+
 ### 🛠️ Admin Dashboard
 *Manage, assign, and approve tasks for the team.*
 ![Admin Dashboard](screenshots/screen_shot_of_the_task.png)
