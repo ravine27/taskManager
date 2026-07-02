@@ -3,7 +3,7 @@ import TaskCard from './TaskCard';
 import EmptyState from './EmptyState';
 import './TaskList.css';
 
-const TaskList = ({ tasks, onToggleComplete, onEdit, onDelete }) => {
+const TaskList = ({ tasks, user, onApprove, onSubmitProof, onEdit, onDelete }) => {
   if (!tasks || tasks.length === 0) {
     return <EmptyState />;
   }
@@ -14,7 +14,9 @@ const TaskList = ({ tasks, onToggleComplete, onEdit, onDelete }) => {
         <TaskCard
           key={task.id}
           task={task}
-          onToggleComplete={onToggleComplete}
+          user={user}
+          onApprove={onApprove}
+          onSubmitProof={onSubmitProof}
           onEdit={onEdit}
           onDelete={onDelete}
         />

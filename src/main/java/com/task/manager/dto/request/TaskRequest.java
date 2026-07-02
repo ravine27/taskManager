@@ -20,6 +20,7 @@ public class TaskRequest {
 
     private String description;
 
-    @NotNull(message = "Completed status is required")
-    private Boolean completed;
+    private Long assignedUserId;
+
+    private String proofDescription;
 }

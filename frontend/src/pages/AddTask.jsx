@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/axiosConfig';
 import Navbar from '../components/Navbar';
@@ -9,10 +9,29 @@ const AddTask = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [completed, setCompleted] = useState(false);
+  const [assignedUserId, setAssignedUserId] = useState('');
+  const [users, setUsers] = useState([]);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get('/users');
+        setUsers(response.data);
+        if (response.data.length > 0) {
+          setAssignedUserId(response.data[0].id);
+        }
+      } catch (err) {
+        setApiError('Failed to load users list.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const validate = () => {
     const newErrors = {};
@@ -21,6 +40,9 @@ const AddTask = () => {
     }
     if (!description.trim()) {
       newErrors.description = 'Description is required';
+    }
+    if (!assignedUserId) {
+      newErrors.assignedUserId = 'Assignee is required';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -34,7 +56,7 @@ const AddTask = () => {
 
     setLoading(true);
     try {
-      await api.post('/tasks', { title, description, completed });
+      await api.post('/tasks', { title, description, assignedUserId: Number(assignedUserId) });
       navigate('/dashboard');
     } catch (err) {
       setApiError(err.response?.data?.message || 'Failed to create task.');
@@ -50,7 +72,7 @@ const AddTask = () => {
 
       <main className="form-main">
         <div className="form-card">
-          <h2 className="form-title">Create New Task</h2>
+          <h2 className="form-title">Create and Assign Task</h2>
 
           {apiError && <div className="error-banner">{apiError}</div>}
 
@@ -79,14 +101,30 @@ const AddTask = () => {
               {errors.description && <div className="error-text">{errors.description}</div>}
             </div>
 
-            <div className="checkbox-group">
-              <input
-                type="checkbox"
-                id="completed"
-                checked={completed}
-                onChange={(e) => setCompleted(e.target.checked)}
-              />
-              <label htmlFor="completed">Mark as Completed</label>
+            <div className="form-group">
+              <label htmlFor="assignedUserId">Assign User</label>
+              <select
+                id="assignedUserId"
+                value={assignedUserId}
+                onChange={(e) => setAssignedUserId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  marginTop: '6px',
+                  outline: 'none',
+                  backgroundColor: 'white',
+                }}
+              >
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.role})
+                  </option>
+                ))}
+              </select>
+              {errors.assignedUserId && <div className="error-text">{errors.assignedUserId}</div>}
             </div>
 
             <div className="form-actions">
@@ -94,7 +132,7 @@ const AddTask = () => {
                 Cancel
               </button>
               <button type="submit" className="btn-primary">
-                Save Task
+                Assign Task
               </button>
             </div>
           </form>

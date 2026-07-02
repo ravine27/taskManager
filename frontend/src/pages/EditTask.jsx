@@ -11,28 +11,32 @@ const EditTask = () => {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [completed, setCompleted] = useState(false);
+  const [assignedUserId, setAssignedUserId] = useState('');
+  const [users, setUsers] = useState([]);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchTask = async () => {
+    const loadData = async () => {
       setLoading(true);
       setApiError('');
       try {
-        const response = await api.get(`/tasks/${id}`);
-        const task = response.data;
+        const usersResponse = await api.get('/users');
+        setUsers(usersResponse.data);
+
+        const taskResponse = await api.get(`/tasks/${id}`);
+        const task = taskResponse.data;
         setTitle(task.title);
         setDescription(task.description || '');
-        setCompleted(task.completed || false);
+        setAssignedUserId(task.assignedUserId || '');
       } catch (err) {
-        setApiError(err.response?.data?.message || 'Failed to fetch task details.');
+        setApiError(err.response?.data?.message || 'Failed to fetch details.');
       } finally {
         setLoading(false);
       }
     };
-    fetchTask();
+    loadData();
   }, [id]);
 
   const validate = () => {
@@ -42,6 +46,9 @@ const EditTask = () => {
     }
     if (!description.trim()) {
       newErrors.description = 'Description is required';
+    }
+    if (!assignedUserId) {
+      newErrors.assignedUserId = 'Assignee is required';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -55,7 +62,7 @@ const EditTask = () => {
 
     setLoading(true);
     try {
-      await api.put(`/tasks/${id}`, { title, description, completed });
+      await api.put(`/tasks/${id}`, { title, description, assignedUserId: Number(assignedUserId) });
       navigate('/dashboard');
     } catch (err) {
       setApiError(err.response?.data?.message || 'Failed to update task.');
@@ -71,7 +78,7 @@ const EditTask = () => {
 
       <main className="form-main">
         <div className="form-card">
-          <h2 className="form-title">Edit Task</h2>
+          <h2 className="form-title">Edit & Reassign Task</h2>
 
           {apiError && <div className="error-banner">{apiError}</div>}
 
@@ -100,14 +107,30 @@ const EditTask = () => {
               {errors.description && <div className="error-text">{errors.description}</div>}
             </div>
 
-            <div className="checkbox-group">
-              <input
-                type="checkbox"
-                id="completed"
-                checked={completed}
-                onChange={(e) => setCompleted(e.target.checked)}
-              />
-              <label htmlFor="completed">Mark as Completed</label>
+            <div className="form-group">
+              <label htmlFor="assignedUserId">Assign User</label>
+              <select
+                id="assignedUserId"
+                value={assignedUserId}
+                onChange={(e) => setAssignedUserId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  marginTop: '6px',
+                  outline: 'none',
+                  backgroundColor: 'white',
+                }}
+              >
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.role})
+                  </option>
+                ))}
+              </select>
+              {errors.assignedUserId && <div className="error-text">{errors.assignedUserId}</div>}
             </div>
 
             <div className="form-actions">

@@ -53,4 +53,9 @@ public class TaskController {
         taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/approve")
+    public ResponseEntity<TaskResponse> approveTask(@PathVariable Long id) {
+        return ResponseEntity.ok(taskService.approveTask(id));
+    }
 }

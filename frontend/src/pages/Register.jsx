@@ -12,6 +12,7 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('USER');
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -55,7 +56,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      await registerUser(name, email, password);
+      await registerUser(name, email, password, role);
       setSuccessMsg('Registration successful! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
@@ -100,6 +101,28 @@ const Register = () => {
               placeholder="name@example.com"
             />
             {errors.email && <div className="error-text">{errors.email}</div>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="role">Role</label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                border: '1px solid var(--border)',
+                borderRadius: '6px',
+                fontSize: '14px',
+                marginTop: '6px',
+                outline: 'none',
+                backgroundColor: 'white',
+              }}
+            >
+              <option value="USER">User</option>
+              <option value="ADMIN">Admin</option>
+            </select>
           </div>
 
           <div className="form-group">

@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/axiosConfig';
 import Navbar from '../components/Navbar';
 import TaskList from '../components/TaskList';
 import Loader from '../components/Loader';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { AuthContext } from '../context/AuthContext';
 import { FiPlus } from 'react-icons/fi';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -36,23 +38,34 @@ const Dashboard = () => {
     fetchTasks();
   }, []);
 
-  const handleToggleComplete = async (task) => {
+  const handleApproveTask = async (id) => {
     setLoading(true);
     setApiError('');
     try {
-      const updatedData = {
-        title: task.title,
-        description: task.description,
-        completed: !task.completed,
-      };
-      await api.put(`/tasks/${task.id}`, updatedData);
-      
-      // Update local state directly to be fast
-      setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t));
-      setSuccessMsg(`Task "${task.title}" updated.`);
+      const response = await api.put(`/tasks/${id}/approve`);
+      setTasks(tasks.map(t => t.id === id ? { ...t, status: 'COMPLETED' } : t));
+      setSuccessMsg('Task approved and completed.');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      setApiError(err.response?.data?.message || 'Failed to update task status.');
+      setApiError(err.response?.data?.message || 'Failed to approve task.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitProof = async (id, proofDescription) => {
+    setLoading(true);
+    setApiError('');
+    try {
+      const response = await api.put(`/tasks/${id}`, {
+        title: tasks.find(t => t.id === id).title,
+        proofDescription
+      });
+      setTasks(tasks.map(t => t.id === id ? { ...t, status: 'PENDING_APPROVAL', proofDescription } : t));
+      setSuccessMsg('Work proof submitted successfully.');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      setApiError(err.response?.data?.message || 'Failed to submit proof.');
     } finally {
       setLoading(false);
     }
@@ -86,6 +99,8 @@ const Dashboard = () => {
     }
   };
 
+  const isAdmin = user?.role === 'ADMIN';
+
   return (
     <div className="dashboard-page">
       <Navbar />
@@ -94,13 +109,17 @@ const Dashboard = () => {
       <main className="dashboard-main">
         <div className="dashboard-header">
           <div>
-            <h2 className="dashboard-title">Your Tasks</h2>
-            <p className="dashboard-subtitle">Manage and track your daily tasks</p>
+            <h2 className="dashboard-title">{isAdmin ? 'All Assigned Tasks' : 'Your Tasks'}</h2>
+            <p className="dashboard-subtitle">
+              {isAdmin ? 'Manage, track, and approve user tasks' : 'View your assigned work and submit completion proof'}
+            </p>
           </div>
-          <button className="add-task-btn" onClick={() => navigate('/add-task')}>
-            <FiPlus />
-            <span>Add Task</span>
-          </button>
+          {isAdmin && (
+            <button className="add-task-btn" onClick={() => navigate('/add-task')}>
+              <FiPlus />
+              <span>Add Task</span>
+            </button>
+          )}
         </div>
 
         {apiError && <div className="error-banner">{apiError}</div>}
@@ -109,7 +128,9 @@ const Dashboard = () => {
         <div className="dashboard-content">
           <TaskList
             tasks={tasks}
-            onToggleComplete={handleToggleComplete}
+            user={user}
+            onApprove={handleApproveTask}
+            onSubmitProof={handleSubmitProof}
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
           />

@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.task.manager.entity.TaskStatus;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,11 +30,22 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse createTask(TaskRequest request) {
         User currentUser = getCurrentUser();
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("Only Admins can create tasks");
+        }
+
+        if (request.getAssignedUserId() == null) {
+            throw new IllegalArgumentException("assignedUserId is required for task creation");
+        }
+
+        User assignedUser = userRepository.findById(request.getAssignedUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Assigned user not found with id: " + request.getAssignedUserId()));
+
         Task task = Task.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .completed(request.getCompleted())
-                .user(currentUser)
+                .status(TaskStatus.ASSIGNED)
+                .user(assignedUser)
                 .build();
 
         Task savedTask = taskRepository.save(task);
@@ -44,7 +56,12 @@ public class TaskServiceImpl implements TaskService {
     @Transactional(readOnly = true)
     public List<TaskResponse> getMyTasks() {
         User currentUser = getCurrentUser();
-        List<Task> tasks = taskRepository.findByUserId(currentUser.getId());
+        List<Task> tasks;
+        if (currentUser.getRole() == Role.ADMIN) {
+            tasks = taskRepository.findAll();
+        } else {
+            tasks = taskRepository.findByUserId(currentUser.getId());
+        }
         return tasks.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -70,9 +87,22 @@ public class TaskServiceImpl implements TaskService {
 
         validateOwnership(task, currentUser);
 
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
-        task.setCompleted(request.getCompleted());
+        if (currentUser.getRole() == Role.ADMIN) {
+            task.setTitle(request.getTitle());
+            task.setDescription(request.getDescription());
+            if (request.getAssignedUserId() != null) {
+                User assignedUser = userRepository.findById(request.getAssignedUserId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Assigned user not found"));
+                task.setUser(assignedUser);
+            }
+        } else {
+            // USER workflow: submit proof of completion
+            if (request.getProofDescription() == null || request.getProofDescription().trim().isEmpty()) {
+                throw new IllegalArgumentException("Proof description is required to submit task completion");
+            }
+            task.setProofDescription(request.getProofDescription());
+            task.setStatus(TaskStatus.PENDING_APPROVAL);
+        }
 
         Task updatedTask = taskRepository.save(task);
         return mapToResponse(updatedTask);
@@ -81,12 +111,29 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void deleteTask(Long id) {
         User currentUser = getCurrentUser();
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("Only Admins can delete tasks");
+        }
+
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
 
-        validateOwnership(task, currentUser);
-
         taskRepository.delete(task);
+    }
+
+    @Override
+    public TaskResponse approveTask(Long id) {
+        User currentUser = getCurrentUser();
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("Only Admins can approve tasks");
+        }
+
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
+
+        task.setStatus(TaskStatus.COMPLETED);
+        Task approvedTask = taskRepository.save(task);
+        return mapToResponse(approvedTask);
     }
 
     private User getCurrentUser() {
@@ -106,8 +153,11 @@ public class TaskServiceImpl implements TaskService {
                 .id(task.getId())
                 .title(task.getTitle())
                 .description(task.getDescription())
-                .completed(task.getCompleted())
+                .status(task.getStatus())
+                .proofDescription(task.getProofDescription())
                 .userId(task.getUser().getId())
+                .assignedUserName(task.getUser().getName())
+                .assignedUserEmail(task.getUser().getEmail())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();

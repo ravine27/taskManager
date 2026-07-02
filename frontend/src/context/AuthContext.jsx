@@ -28,9 +28,9 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
-  const registerUser = async (name, email, password) => {
+  const registerUser = async (name, email, password, role = 'USER') => {
     // Note: RegisterRequest on the backend requires role (USER / ADMIN)
-    await api.post('/auth/register', { name, email, password, role: 'USER' });
+    await api.post('/auth/register', { name, email, password, role });
   };
 
   const logout = () => {
